@@ -21,4 +21,10 @@ public class EvaluatorTest {
         assertEquals(2.0, evaluator.eval(expression, evaluator.getGlobalEnvironment()));
     }
 
+    @Test
+    public void testMultiplication() {
+        Evaluator evaluator = new Evaluator();
+        List<Object> expression = Arrays.asList("*", 4, 3);
+        assertEquals(12.0, evaluator.eval(expression, evaluator.getGlobalEnvironment()));
+    }
 }
