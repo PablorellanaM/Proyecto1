@@ -41,4 +41,11 @@ public class EvaluatorTest {
         List<Object> expression = Arrays.asList();
         evaluator.eval(expression, evaluator.getGlobalEnvironment());
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUnknownOperator() {
+        Evaluator evaluator = new Evaluator();
+        List<Object> expression = Arrays.asList("%", 4, 3); // Using an undefined operator
+        evaluator.eval(expression, evaluator.getGlobalEnvironment());
+    }
 }
