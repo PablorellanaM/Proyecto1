@@ -8,7 +8,8 @@ import java.util.Scanner;
 import java.util.function.Function;
 
 /**
- * Clase que representa un evaluador de expresiones.
+ * Clase que representa un evaluador de expresiones en un intérprete LISP
+ * simplificado.
  */
 public class Evaluator {
 
@@ -26,33 +27,31 @@ public class Evaluator {
      * Inicializa el entorno global con operadores predefinidos.
      */
     private void initializeGlobalEnvironment() {
-        globalEnvironment.define("+",
-                args -> args.stream().mapToDouble(arg -> Double.parseDouble(arg.toString())).sum());
+        globalEnvironment.define("+", args -> args.stream().mapToDouble(arg -> (double) arg).sum());
         globalEnvironment.define("-", args -> {
             if (args.size() == 1) {
-                return -Double.parseDouble(args.get(0).toString());
+                return -((double) args.get(0));
             } else {
-                double result = Double.parseDouble(args.get(0).toString());
+                double result = (double) args.get(0);
                 for (int i = 1; i < args.size(); i++) {
-                    result -= Double.parseDouble(args.get(i).toString());
+                    result -= (double) args.get(i);
                 }
                 return result;
             }
         });
-        globalEnvironment.define("*", args -> args.stream().mapToDouble(arg -> Double.parseDouble(arg.toString()))
-                .reduce(1, (a, b) -> a * b));
+        globalEnvironment.define("*",
+                args -> args.stream().mapToDouble(arg -> (double) arg).reduce(1, (a, b) -> a * b));
         globalEnvironment.define("/", args -> {
             if (args.size() == 1) {
-                return 1 / Double.parseDouble(args.get(0).toString());
+                return 1 / (double) args.get(0);
             } else {
-                double result = Double.parseDouble(args.get(0).toString());
+                double result = (double) args.get(0);
                 for (int i = 1; i < args.size(); i++) {
-                    result /= Double.parseDouble(args.get(i).toString());
+                    result /= (double) args.get(i);
                 }
                 return result;
             }
         });
-        // Puedes agregar más definiciones aquí si lo deseas
     }
 
     /**
@@ -73,11 +72,20 @@ public class Evaluator {
                         "El primer elemento de la lista debe ser un operador en forma de String");
             }
             String operator = (String) list.get(0);
-            List<Object> args = new ArrayList<>(list.subList(1, list.size()));
+            List<Object> args = new ArrayList<>();
+            for (int i = 1; i < list.size(); i++) {
+                Object arg = list.get(i);
+                if (arg instanceof List) {
+                    arg = eval(arg, env); // Evaluar argumentos anidados
+                }
+                args.add(arg);
+            }
             Function<List<Object>, Object> function = env.lookup(operator);
             return function.apply(args);
+        } else if (expr instanceof Double) {
+            return expr; // Si es un número, devolverlo tal cual
         } else {
-            return expr; // Números y literales son devueltos como están
+            throw new IllegalArgumentException("Expresión no válida");
         }
     }
 

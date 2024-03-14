@@ -1,81 +1,109 @@
 package com.uvg.edu.gt;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
- * Analizador de expresiones LISP.
+ * Clase para analizar y parsear expresiones LISP simplificadas.
  */
 public class Parser {
 
     /**
-     * Convierte una cadena de texto que representa una expresión LISP en una lista
-     * de objetos.
+     * Analiza una cadena de entrada y la convierte en una estructura de datos
+     * adecuada para su evaluación.
      *
-     * @param code La expresión LISP como cadena de texto.
-     * @return Una lista de objetos representando la expresión LISP.
+     * @param input la cadena de entrada a analizar.
+     * @return la estructura de datos representando la expresión.
      */
-    public static List<Object> parse(String code) {
-        List<String> tokens = tokenize(code);
-        if (!tokens.isEmpty()) {
-            return readFromTokens(tokens);
-        }
-        return new ArrayList<>();
+    public static Object parse(String input) {
+        List<Object> tokens = tokenize(input);
+        return parseTokens(tokens);
     }
 
     /**
-     * Divide el código LISP en tokens individuales.
+     * Divide una cadena de entrada en tokens individuales.
      *
-     * @param code El código LISP como cadena de texto.
-     * @return Una lista de tokens como cadenas.
+     * @param input la cadena de entrada a tokenizar.
+     * @return una lista de tokens.
      */
-    private static List<String> tokenize(String code) {
-        String[] tokens = code.replace("(", " ( ").replace(")", " ) ").trim().split("\\s+");
-        return new ArrayList<>(Arrays.asList(tokens));
-    }
+    private static List<Object> tokenize(String input) {
+        List<Object> tokens = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
+        boolean inNumber = false;
 
-    /**
-     * Lee los tokens para construir una lista anidada que representa la expresión
-     * LISP.
-     *
-     * @param tokens Los tokens a leer.
-     * @return Una lista anidada de objetos representando la expresión LISP.
-     */
-    private static List<Object> readFromTokens(List<String> tokens) {
-        if (tokens.isEmpty()) {
-            throw new IllegalStateException("No más tokens para leer");
-        }
-        String token = tokens.remove(0);
-        if ("(".equals(token)) {
-            List<Object> L = new ArrayList<>();
-            while (!")".equals(tokens.get(0))) {
-                L.add(readFromTokens(tokens));
+        for (char c : input.toCharArray()) {
+            if (Character.isWhitespace(c)) {
+                if (sb.length() > 0) {
+                    tokens.add(getToken(sb.toString(), inNumber));
+                    sb.setLength(0);
+                    inNumber = false;
+                }
+            } else if (c == '(' || c == ')') {
+                if (sb.length() > 0) {
+                    tokens.add(getToken(sb.toString(), inNumber));
+                    sb.setLength(0);
+                    inNumber = false;
+                }
+                tokens.add(String.valueOf(c));
+            } else {
+                sb.append(c);
+                if (Character.isDigit(c) && !inNumber) {
+                    inNumber = true;
+                }
             }
-            tokens.remove(0); // Elimina el token ')'
-            return L;
-        } else if (")".equals(token)) {
-            throw new IllegalStateException("')' inesperado");
+        }
+
+        if (sb.length() > 0) {
+            tokens.add(getToken(sb.toString(), inNumber));
+        }
+
+        return tokens;
+    }
+
+    /**
+     * Convierte un token en el tipo de dato apropiado.
+     *
+     * @param token    el token a convertir.
+     * @param isNumber indica si el token representa un número.
+     * @return el token convertido al tipo de dato apropiado.
+     */
+    private static Object getToken(String token, boolean isNumber) {
+        if (isNumber) {
+            return Double.parseDouble(token);
         } else {
-            return new ArrayList<>(Arrays.asList(atom(token)));
+            return token;
         }
     }
 
     /**
-     * Convierte un token en un átomo, que puede ser un número o un símbolo.
+     * Convierte una lista de tokens en una estructura de datos representando la
+     * expresión LISP.
      *
-     * @param token El token a convertir.
-     * @return El átomo como objeto, que puede ser un Integer, Double o String.
+     * @param tokens la lista de tokens a convertir.
+     * @return la estructura de datos representando la expresión LISP.
      */
-    private static Object atom(String token) {
-        try {
-            return Integer.parseInt(token);
-        } catch (NumberFormatException e) {
-            try {
-                return Double.parseDouble(token);
-            } catch (NumberFormatException e2) {
-                return token; // Es un símbolo
+    private static Object parseTokens(List<Object> tokens) {
+        if (tokens.isEmpty()) {
+            throw new IllegalArgumentException("Expresión vacía");
+        }
+
+        String token = (String) tokens.get(0);
+        tokens.remove(0);
+
+        if ("(".equals(token)) {
+            List<Object> list = new ArrayList<>();
+            while (!tokens.isEmpty() && !")".equals(tokens.get(0))) {
+                list.add(parseTokens(tokens));
             }
+            if (tokens.isEmpty()) {
+                throw new IllegalArgumentException("Paréntesis no cerrado");
+            }
+            tokens.remove(0);
+            return list;
+        } else if (")".equals(token)) {
+            throw new IllegalArgumentException("Paréntesis no abierto");
+        } else {
+            return token;
         }
     }
 }
