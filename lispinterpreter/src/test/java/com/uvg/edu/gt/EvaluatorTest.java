@@ -13,4 +13,12 @@ public class EvaluatorTest {
         List<Object> expression = Arrays.asList("+", 1, 2);
         assertEquals(3.0, evaluator.eval(expression, evaluator.getGlobalEnvironment()));
     }
+
+    @Test
+    public void testSubtraction() {
+        Evaluator evaluator = new Evaluator();
+        List<Object> expression = Arrays.asList("-", 5, 3);
+        assertEquals(2.0, evaluator.eval(expression, evaluator.getGlobalEnvironment()));
+    }
+
 }
