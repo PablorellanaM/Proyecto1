@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.function.Function;
 
 public class Evaluator {
@@ -16,8 +17,8 @@ public class Evaluator {
     }
 
     private void initializeGlobalEnvironment() {
-        globalEnvironment.define("+",
-                args -> args.stream().mapToDouble(arg -> Double.parseDouble(arg.toString())).sum());
+       
+        globalEnvironment.define("+", args -> args.stream().mapToDouble(arg -> Double.parseDouble(arg.toString())).sum());
         globalEnvironment.define("-", args -> {
             if (args.size() == 1) {
                 return -Double.parseDouble(args.get(0).toString());
@@ -29,7 +30,7 @@ public class Evaluator {
                 return result;
             }
         });
-        // Aquí puedes definir más operadores si es necesario
+        
     }
 
     public Object eval(List<Object> expr, Environment env) {
@@ -37,13 +38,40 @@ public class Evaluator {
             throw new IllegalArgumentException("Empty expression");
         }
         String operator = expr.get(0).toString();
-        List<Object> args = expr.subList(1, expr.size());
+        List<Object> args = new ArrayList<>(expr.subList(1, expr.size()));
         Function<List<Object>, Object> function = env.lookup(operator);
         return function.apply(args);
     }
 
     public Environment getGlobalEnvironment() {
         return globalEnvironment;
+    }
+
+    public static void main(String[] args) {
+        Evaluator evaluator = new Evaluator();
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Bienvenido al intérprete LISP simplificado. Escribe 'salir' para salir.");
+
+        while (true) {
+            System.out.print("lisp> ");
+            String input = scanner.nextLine();
+
+            if ("salir".equalsIgnoreCase(input)) {
+                System.out.println("Saliendo del intérprete...");
+                break;
+            }
+
+            try {
+               
+                Object result = evaluator.eval(Parser.parse(input), evaluator.getGlobalEnvironment());
+                System.out.println("Resultado: " + result);
+            } catch (Exception e) {
+                System.out.println("Error al evaluar la expresión: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        scanner.close();
     }
 }
 
