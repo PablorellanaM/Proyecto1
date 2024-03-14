@@ -34,4 +34,11 @@ public class EvaluatorTest {
         List<Object> expression = Arrays.asList("/", 8, 2);
         assertEquals(4.0, evaluator.eval(expression, evaluator.getGlobalEnvironment()));
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testEmptyExpression() {
+        Evaluator evaluator = new Evaluator();
+        List<Object> expression = Arrays.asList();
+        evaluator.eval(expression, evaluator.getGlobalEnvironment());
+    }
 }
