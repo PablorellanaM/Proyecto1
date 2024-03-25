@@ -47,7 +47,7 @@ public class Parser {
                 tokens.add(String.valueOf(c));
             } else {
                 sb.append(c);
-                if (Character.isDigit(c) && !inNumber) {
+                if (Character.isDigit(c) || c == '.') {
                     inNumber = true;
                 }
             }
@@ -69,7 +69,11 @@ public class Parser {
      */
     private static Object getToken(String token, boolean isNumber) {
         if (isNumber) {
-            return Double.parseDouble(token);
+            try {
+                return Integer.parseInt(token);
+            } catch (NumberFormatException e) {
+                return Double.parseDouble(token);
+            }
         } else {
             return token;
         }
@@ -87,8 +91,7 @@ public class Parser {
             throw new IllegalArgumentException("Expresión vacía");
         }
 
-        String token = (String) tokens.get(0);
-        tokens.remove(0);
+        Object token = tokens.remove(0);
 
         if ("(".equals(token)) {
             List<Object> list = new ArrayList<>();
@@ -98,7 +101,7 @@ public class Parser {
             if (tokens.isEmpty()) {
                 throw new IllegalArgumentException("Paréntesis no cerrado");
             }
-            tokens.remove(0);
+            tokens.remove(0); // elimina el ')'
             return list;
         } else if (")".equals(token)) {
             throw new IllegalArgumentException("Paréntesis no abierto");

@@ -16,7 +16,7 @@ public class Evaluator {
     private final Environment globalEnvironment;
 
     /**
-     * Constructor de la clase Evaluator.
+     * Constructor de la clase Evaluator que inicializa el entorno global.
      */
     public Evaluator() {
         this.globalEnvironment = new Environment();
@@ -24,42 +24,43 @@ public class Evaluator {
     }
 
     /**
-     * Inicializa el entorno global con operadores predefinidos.
+     * Inicializa el entorno global con operadores aritméticos básicos.
      */
     private void initializeGlobalEnvironment() {
-        globalEnvironment.define("+", args -> args.stream().mapToDouble(arg -> (double) arg).sum());
+        globalEnvironment.define("+", args -> args.stream().mapToDouble(arg -> ((Number) arg).doubleValue()).sum());
         globalEnvironment.define("-", args -> {
             if (args.size() == 1) {
-                return -((double) args.get(0));
+                return -((Number) args.get(0)).doubleValue();
             } else {
-                double result = (double) args.get(0);
+                double result = ((Number) args.get(0)).doubleValue();
                 for (int i = 1; i < args.size(); i++) {
-                    result -= (double) args.get(i);
+                    result -= ((Number) args.get(i)).doubleValue();
                 }
                 return result;
             }
         });
         globalEnvironment.define("*",
-                args -> args.stream().mapToDouble(arg -> (double) arg).reduce(1, (a, b) -> a * b));
+                args -> args.stream().mapToDouble(arg -> ((Number) arg).doubleValue()).reduce(1, (a, b) -> a * b));
         globalEnvironment.define("/", args -> {
             if (args.size() == 1) {
-                return 1 / (double) args.get(0);
+                return 1 / ((Number) args.get(0)).doubleValue();
             } else {
-                double result = (double) args.get(0);
+                double result = ((Number) args.get(0)).doubleValue();
                 for (int i = 1; i < args.size(); i++) {
-                    result /= (double) args.get(i);
+                    result /= ((Number) args.get(i)).doubleValue();
                 }
                 return result;
             }
         });
+
     }
 
     /**
      * Evalúa una expresión en un entorno dado.
      *
-     * @param expr la expresión a evaluar.
-     * @param env  el entorno en el que se evalúa la expresión.
-     * @return el resultado de la evaluación de la expresión.
+     * @param expr La expresión a evaluar.
+     * @param env  El entorno en el que se evalúa la expresión.
+     * @return El resultado de la evaluación de la expresión.
      */
     public Object eval(Object expr, Environment env) {
         if (expr instanceof List) {
@@ -67,41 +68,23 @@ public class Evaluator {
             if (list.isEmpty()) {
                 throw new IllegalArgumentException("Expresión vacía");
             }
-            if (!(list.get(0) instanceof String)) {
-                throw new IllegalArgumentException(
-                        "El primer elemento de la lista debe ser un operador en forma de String");
-            }
             String operator = (String) list.get(0);
             List<Object> args = new ArrayList<>();
             for (int i = 1; i < list.size(); i++) {
-                Object arg = list.get(i);
-                if (arg instanceof List) {
-                    arg = eval(arg, env); // Evaluar argumentos anidados
-                }
-                args.add(arg);
+                args.add(eval(list.get(i), env));
             }
             Function<List<Object>, Object> function = env.lookup(operator);
             return function.apply(args);
-        } else if (expr instanceof Double) {
-            return expr; // Si es un número, devolverlo tal cual
         } else {
-            throw new IllegalArgumentException("Expresión no válida");
+            return expr;
         }
     }
 
     /**
-     * Obtiene el entorno global.
+     * Método principal que proporciona una interfaz de línea de comandos para el
+     * intérprete LISP.
      *
-     * @return el entorno global.
-     */
-    public Environment getGlobalEnvironment() {
-        return globalEnvironment;
-    }
-
-    /**
-     * Método principal que ejecuta el intérprete.
-     *
-     * @param args los argumentos de la línea de comandos (no utilizados).
+     * @param args Argumentos pasados al programa (no utilizados).
      */
     public static void main(String[] args) {
         Evaluator evaluator = new Evaluator();
@@ -125,16 +108,22 @@ public class Evaluator {
             }
         }
     }
+
+    public Environment getGlobalEnvironment() {
+        return globalEnvironment;
+    }
+
 }
 
 /**
- * Clase que representa un entorno de evaluación.
+ * Clase que representa el entorno de evaluación que mantiene un registro de
+ * operadores y variables.
  */
 class Environment {
     private final Map<String, Function<List<Object>, Object>> data;
 
     /**
-     * Constructor de la clase Environment.
+     * Constructor de la clase Environment que inicializa el mapa de datos.
      */
     public Environment() {
         this.data = new HashMap<>();
@@ -143,8 +132,8 @@ class Environment {
     /**
      * Define un operador en el entorno.
      *
-     * @param name     el nombre del operador.
-     * @param function la función asociada al operador.
+     * @param name     El nombre del operador.
+     * @param function La función asociada al operador.
      */
     public void define(String name, Function<List<Object>, Object> function) {
         data.put(name, function);
@@ -153,10 +142,8 @@ class Environment {
     /**
      * Busca una función asociada a un operador en el entorno.
      *
-     * @param name el nombre del operador.
-     * @return la función asociada al operador.
-     * @throws IllegalArgumentException si el operador no está definido en el
-     *                                  entorno.
+     * @param name El nombre del operador.
+     * @return La función asociada al operador.
      */
     public Function<List<Object>, Object> lookup(String name) {
         if (!data.containsKey(name)) {
